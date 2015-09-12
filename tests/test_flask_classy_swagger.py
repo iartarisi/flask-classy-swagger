@@ -1,6 +1,7 @@
 import json
 
 from flask import Flask
+import pytest
 
 from flask_classy_swagger import schema, swaggerify
 
@@ -25,11 +26,14 @@ class TestSchema(object):
             dict(BASIC_SCHEMA, **{'basePath': '/myswagger'}))
 
 
-class TestSwaggerify(object):
-    def test_basic(self):
-        app = Flask('test')
-        swaggerify(app, '/my-swagger-path', TITLE, VERSION)
-        client = app.test_client()
+@pytest.fixture
+def app():
+    app = Flask('test')
+    swaggerify(app, TITLE, VERSION)
+    return app.test_client()
 
-        response = client.get('/my-swagger-path')
+
+class TestSwaggerify(object):
+    def test_empty(self, app):
+        response = app.get('/swagger.json')
         assert json.loads(response.data) == BASIC_SCHEMA

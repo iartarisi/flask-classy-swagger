@@ -2,6 +2,7 @@ from flask import jsonify
 
 
 SWAGGER_VERSION = '2.0'
+SWAGGER_PATH = '/swagger.json'
 
 
 def schema(title, version, base_path=None):
@@ -15,7 +16,8 @@ def schema(title, version, base_path=None):
     return schema
 
 
-def swaggerify(app, swagger_path, title, version, base_path=None):
+def swaggerify(
+        app, title, version, swagger_path=SWAGGER_PATH, base_path=None):
     @app.route(swagger_path)
     def swagger():
         return jsonify(schema(title, version, base_path))
