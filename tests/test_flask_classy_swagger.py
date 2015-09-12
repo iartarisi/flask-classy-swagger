@@ -28,8 +28,8 @@ class TestSchema(object):
 class TestSwaggerify(object):
     def test_basic(self):
         app = Flask('test')
-        swaggerify(app, TITLE, VERSION)
+        swaggerify(app, '/my-swagger-path', TITLE, VERSION)
         client = app.test_client()
 
-        response = client.get('/swagger')
+        response = client.get('/my-swagger-path')
         assert json.loads(response.data) == BASIC_SCHEMA

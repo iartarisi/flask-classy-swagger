@@ -15,7 +15,7 @@ def schema(title, version, base_path=None):
     return schema
 
 
-def swaggerify(app, title, version, base_path=None):
-    @app.route("/swagger")
+def swaggerify(app, swagger_path, title, version, base_path=None):
+    @app.route(swagger_path)
     def swagger():
         return jsonify(schema(title, version, base_path))
