@@ -1,9 +1,16 @@
 import json
 
 from flask import Flask
-import pytest
+from flask.ext.classy import FlaskView
 
-from flask_classy_swagger import schema, swaggerify
+import mock
+
+from flask_classy_swagger import (
+    generate_docs,
+    get_path,
+    schema,
+    swaggerify,
+)
 
 
 TITLE = 'MyTestAPI'
@@ -26,14 +33,63 @@ class TestSchema(object):
             dict(BASIC_SCHEMA, **{'basePath': '/myswagger'}))
 
 
-@pytest.fixture
-def app():
-    app = Flask('test')
-    swaggerify(app, TITLE, VERSION)
-    return app.test_client()
-
-
 class TestSwaggerify(object):
-    def test_empty(self, app):
-        response = app.get('/swagger.json')
+    def test_empty(self):
+        app = Flask('test')
+        swaggerify(app, TITLE, VERSION)
+        client = app.test_client()
+
+        response = client.get('/swagger.json')
         assert json.loads(response.data) == BASIC_SCHEMA
+
+
+class TestGenerateDocs(object):
+    def test_post_route(self):
+        class BaloonsView(FlaskView):
+            def post(self, foo):
+                return foo
+
+        app = Flask('test')
+        BaloonsView.register(app)
+
+        assert (
+            generate_docs(app, TITLE, VERSION) ==
+            dict(BASIC_SCHEMA,
+                 **{'paths': {
+                     '/baloons': {
+                         'post': {}}}}))
+
+    def test_index_route(self):
+        class BaloonsView(FlaskView):
+            def index(self):
+                return "Oi"
+
+        app = Flask('test')
+        BaloonsView.register(app)
+
+        assert (
+            generate_docs(app, TITLE, VERSION) ==
+            dict(BASIC_SCHEMA,
+                 **{'paths': {
+                     '/baloons': {
+                         'get': {}}}}))
+
+
+class TestGetPath(object):
+    def test_root_path(self):
+        assert _get_path('/') == '/'
+
+    def test_simple_paths(self):
+        assert _get_path('/foo/') == '/foo'
+        assert _get_path('/foo.json') == '/foo.json'
+        assert _get_path('/foo') == '/foo'
+
+    def test_path_with_one_arg(self):
+        assert _get_path('/foo/<bar>') == '/foo'
+
+
+def _get_path(rule_rule):
+    """Helper for creating a (mocked) rule object with the given `rule` attr"""
+    rule = mock.Mock()
+    rule.rule = rule_rule
+    return get_path(rule)
