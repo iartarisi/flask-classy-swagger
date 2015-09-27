@@ -48,6 +48,10 @@ def get_path(rule):
     return re.sub(r'(>\w+\</)', '', reversed, count=1)[::-1].rstrip('/')
 
 
+def make_tags(rule):
+    return [rule.endpoint.split(":")[0]]
+
+
 def generate_docs(app, title, version, base_path=None):
     paths = defaultdict(dict)
     for rule in app.url_map.iter_rules():
@@ -57,7 +61,7 @@ def generate_docs(app, title, version, base_path=None):
         path = get_path(rule)
 
         path_item_name = resolve_method(rule)
-        path_item_object = {}
+        path_item_object = {"tags": make_tags(rule)}
         paths[path][path_item_name] = path_item_object
 
     docs = schema(title, version, base_path)

@@ -56,8 +56,9 @@ class TestGenerateDocs(object):
             generate_docs(app, TITLE, VERSION) ==
             dict(BASIC_SCHEMA,
                  **{'paths': {
-                         'post': {}}}}))
                      '/balloons': {
+                         'post': {
+                             'tags': ['Balloons']}}}}))
 
     def test_index_route(self):
         class Balloons(FlaskView):
@@ -71,8 +72,9 @@ class TestGenerateDocs(object):
             generate_docs(app, TITLE, VERSION) ==
             dict(BASIC_SCHEMA,
                  **{'paths': {
-                         'get': {}}}}))
                      '/balloons': {
+                         'get': {
+                             'tags': ['Balloons']}}}}))
 
 
 class TestGetPath(object):
