@@ -45,34 +45,34 @@ class TestSwaggerify(object):
 
 class TestGenerateDocs(object):
     def test_post_route(self):
-        class BaloonsView(FlaskView):
+        class Balloons(FlaskView):
             def post(self, foo):
                 return foo
 
         app = Flask('test')
-        BaloonsView.register(app)
+        Balloons.register(app)
 
         assert (
             generate_docs(app, TITLE, VERSION) ==
             dict(BASIC_SCHEMA,
                  **{'paths': {
-                     '/baloons': {
                          'post': {}}}}))
+                     '/balloons': {
 
     def test_index_route(self):
-        class BaloonsView(FlaskView):
+        class Balloons(FlaskView):
             def index(self):
                 return "Oi"
 
         app = Flask('test')
-        BaloonsView.register(app)
+        Balloons.register(app)
 
         assert (
             generate_docs(app, TITLE, VERSION) ==
             dict(BASIC_SCHEMA,
                  **{'paths': {
-                     '/baloons': {
                          'get': {}}}}))
+                     '/balloons': {
 
 
 class TestGetPath(object):
