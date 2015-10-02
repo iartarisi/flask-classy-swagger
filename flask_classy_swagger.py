@@ -56,8 +56,10 @@ def get_docs(function):
     """Return (summary, description) tuple from the passed in function"""
     # TODO document regexp
     try:
-        return re.match('\s*(.+)\n?\s*(.*) *', function.func_doc).groups()
-    except TypeError:
+        return re.match(
+            '(.+?$)\n?\s*(.*)', function.func_doc.strip(), re.MULTILINE|re.DOTALL
+        ).groups()
+    except AttributeError, TypeError:
         return '', ''
 
 

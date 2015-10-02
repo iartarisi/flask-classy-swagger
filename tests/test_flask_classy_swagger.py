@@ -114,6 +114,21 @@ class TestGetDocs(object):
 
         assert get_docs(func) == ("Look, I'm writing", "Proper docstrings")
 
+    def test_multiple_lines(self):
+        def func():
+            """Look, I'm writing
+
+            Proper
+
+            docstrings
+            """
+
+        assert get_docs(func) == (
+            "Look, I'm writing",
+            """Proper
+
+            docstrings""")
+
     def test_start_with_space(self):
         def func():
             """
