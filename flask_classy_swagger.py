@@ -52,6 +52,15 @@ def make_tags(rule):
     return [rule.endpoint.split(":")[0]]
 
 
+def get_docs(function):
+    """Return (summary, description) tuple from the passed in function"""
+    # TODO document regexp
+    try:
+        return re.match('\s*(.+)\n?\s*(.*) *', function.func_doc).groups()
+    except TypeError:
+        return '', ''
+
+
 def generate_docs(app, title, version, base_path=None):
     paths = defaultdict(dict)
     for rule in app.url_map.iter_rules():
@@ -61,7 +70,12 @@ def generate_docs(app, title, version, base_path=None):
         path = get_path(rule)
 
         path_item_name = resolve_method(rule)
-        path_item_object = {"tags": make_tags(rule)}
+        func = app.view_functions[rule.endpoint]
+        summary, description = get_docs(func)
+        path_item_object = {
+            "summary": summary,
+            "description": description,
+            "tags": make_tags(rule)}
         paths[path][path_item_name] = path_item_object
 
     docs = schema(title, version, base_path)

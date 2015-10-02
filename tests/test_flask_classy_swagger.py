@@ -7,6 +7,7 @@ import mock
 
 from flask_classy_swagger import (
     generate_docs,
+    get_docs,
     get_path,
     schema,
     swaggerify,
@@ -44,26 +45,14 @@ class TestSwaggerify(object):
 
 
 class TestGenerateDocs(object):
-    def test_post_route(self):
-        class Balloons(FlaskView):
-            def post(self, foo):
-                return foo
-
-        app = Flask('test')
-        Balloons.register(app)
-
-        assert (
-            generate_docs(app, TITLE, VERSION) ==
-            dict(BASIC_SCHEMA,
-                 **{'paths': {
-                     '/balloons': {
-                         'post': {
-                             'tags': ['Balloons']}}}}))
-
-    def test_index_route(self):
+    def test_index(self):
         class Balloons(FlaskView):
             def index(self):
-                return "Oi"
+                """Show all the balloons
+
+                Detailed instructions for what to do with balloons
+                """
+                pass
 
         app = Flask('test')
         Balloons.register(app)
@@ -74,7 +63,64 @@ class TestGenerateDocs(object):
                  **{'paths': {
                      '/balloons': {
                          'get': {
+                             'summary': 'Show all the balloons',
+                             'description':
+                             'Detailed instructions for what to do with balloons',
                              'tags': ['Balloons']}}}}))
+
+    def test_post_route(self):
+        class Balloons(FlaskView):
+            def post(self, balloon):
+                """Create a new balloon
+
+                Detailed instructions for creating a balloon
+                """
+                return balloon
+
+        app = Flask('test')
+        Balloons.register(app)
+
+        assert (
+            generate_docs(app, TITLE, VERSION) ==
+            dict(BASIC_SCHEMA,
+                 **{'paths': {
+                     '/balloons': {
+                         'post': {
+                             'summary': 'Create a new balloon',
+                             'description':
+                             'Detailed instructions for creating a balloon',
+                             'tags': ['Balloons']}}}}))
+
+
+class TestGetDocs(object):
+    def test_just_summary(self):
+        def func():
+            """One line docstring"""
+
+        assert get_docs(func) == ('One line docstring', '')
+
+    def test_no_doc(self):
+        def func():
+            pass
+
+        assert get_docs(func) == ('', '')
+
+    def test_one_line_description(self):
+        def func():
+            """Look, I'm writing
+
+            Proper docstrings
+            """
+
+        assert get_docs(func) == ("Look, I'm writing", "Proper docstrings")
+
+    def test_start_with_space(self):
+        def func():
+            """
+            Who does this?!
+            """
+
+        assert get_docs(func) == ('Who does this?!', '')
 
 
 class TestGetPath(object):
