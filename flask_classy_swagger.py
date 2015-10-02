@@ -54,10 +54,16 @@ def make_tags(rule):
 
 def get_docs(function):
     """Return (summary, description) tuple from the passed in function"""
-    # TODO document regexp
     try:
         return re.match(
-            '(.+?$)\n?\s*(.*)', function.func_doc.strip(), re.MULTILINE|re.DOTALL
+            r"""
+            (.+?$) # first (summary) line, non-greedy MULTILINE $
+            \n?    # maybe a newline
+            \s*    # maybe indentation to the beginning of the next line
+            (.*)   # maybe multiple other lines DOTALL
+            """,
+            function.func_doc.strip(),
+            re.MULTILINE | re.DOTALL | re.VERBOSE
         ).groups()
     except AttributeError, TypeError:
         return '', ''
