@@ -3,6 +3,8 @@ from collections import defaultdict
 
 from flask import jsonify
 
+from flask_classy import FlaskView
+
 
 SWAGGER_VERSION = '2.0'
 SWAGGER_PATH = '/swagger.json'
@@ -12,6 +14,7 @@ IGNORED_RULES = ['/static', SWAGGER_PATH]
 def schema(title, version, base_path=None):
     schema = {"swagger": SWAGGER_VERSION,
               "paths": {},
+              "tags": [],
               "info": {
                   "title": title,
                   "version": version}}
@@ -48,8 +51,8 @@ def get_path(rule):
     return re.sub(r'(>\w+\</)', '', reversed, count=1)[::-1].rstrip('/')
 
 
-def make_tags(rule):
-    return [rule.endpoint.split(":")[0]]
+def get_tag(rule):
+    return rule.endpoint.split(":")[0]
 
 
 def get_docs(function):
@@ -69,9 +72,31 @@ def get_docs(function):
         return '', ''
 
 
+def get_flask_classy_class(method):
+    # XXX might not work on python3
+    if method.func_closure is None:
+        return
+
+    for cell in method.func_closure:
+        try:
+            if issubclass(cell.cell_contents.im_class, FlaskView):
+                return cell.cell_contents.im_class
+        except AttributeError:
+            pass
+    else:
+        return
+
+
+def get_tag_description(func):
+    klass = get_flask_classy_class(func)
+    if klass:
+        return klass.__doc__ or ''
+
+
 def generate_everything(app, title, version, base_path=None):
     """Build the whole swagger JSON tree for this app"""
     paths = defaultdict(dict)
+    tags = dict()
     for rule in app.url_map.iter_rules():
         if is_ignored(rule):
             continue
@@ -81,14 +106,21 @@ def generate_everything(app, title, version, base_path=None):
         path_item_name = resolve_method(rule)
         func = app.view_functions[rule.endpoint]
         summary, description = get_docs(func)
+
+        tag = get_tag(rule)
+        if tag not in tags:
+            tags[tag] = get_tag_description(func)
+
         path_item_object = {
             "summary": summary,
             "description": description,
-            "tags": make_tags(rule)}
+            "tags": [tag]}
         paths[path][path_item_name] = path_item_object
 
     docs = schema(title, version, base_path)
     docs['paths'] = paths
+    docs['tags'] = [{'name': k, 'description': v}
+                    for k, v in tags.items()]
     return docs
 
 

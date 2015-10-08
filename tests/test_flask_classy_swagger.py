@@ -21,7 +21,8 @@ BASIC_SCHEMA = {
         'title': TITLE,
         'version': VERSION},
     'swagger': '2.0',
-    'paths': {}}
+    'paths': {},
+    'tags': []}
 
 
 class TestSchema(object):
@@ -44,7 +45,7 @@ class TestSwaggerify(object):
         assert json.loads(response.data) == BASIC_SCHEMA
 
 
-class TestGenerateEverything(object):
+class TestPaths(object):
     def test_index(self):
         class Balloons(FlaskView):
             def index(self):
@@ -58,15 +59,14 @@ class TestGenerateEverything(object):
         Balloons.register(app)
 
         assert (
-            generate_everything(app, TITLE, VERSION) ==
-            dict(BASIC_SCHEMA,
-                 **{'paths': {
-                     '/balloons': {
-                         'get': {
-                             'summary': 'Show all the balloons',
-                             'description':
-                             'Detailed instructions for what to do with balloons',
-                             'tags': ['Balloons']}}}}))
+            generate_everything(app, TITLE, VERSION)['paths'] ==
+            {
+                '/balloons': {
+                    'get': {
+                        'summary': 'Show all the balloons',
+                        'description':
+                        'Detailed instructions for what to do with balloons',
+                        'tags': ['Balloons']}}})
 
     def test_post_route(self):
         class Balloons(FlaskView):
@@ -81,15 +81,43 @@ class TestGenerateEverything(object):
         Balloons.register(app)
 
         assert (
-            generate_everything(app, TITLE, VERSION) ==
-            dict(BASIC_SCHEMA,
-                 **{'paths': {
-                     '/balloons': {
-                         'post': {
-                             'summary': 'Create a new balloon',
-                             'description':
-                             'Detailed instructions for creating a balloon',
-                             'tags': ['Balloons']}}}}))
+            generate_everything(app, TITLE, VERSION)['paths'] ==
+            {
+                '/balloons': {
+                    'post': {
+                        'summary': 'Create a new balloon',
+                        'description':
+                        'Detailed instructions for creating a balloon',
+                        'tags': ['Balloons']}}})
+
+
+class TestTags(object):
+    def test_no_class_docstring(self):
+        class Balloons(FlaskView):
+            def index(self):
+                return
+
+        app = Flask('test')
+        Balloons.register(app)
+
+        assert (
+            generate_everything(app, TITLE, VERSION)['tags'] ==
+            [{'name': "Balloons", 'description': ""}]
+        )
+
+    def test_simple(self):
+        class Balloons(FlaskView):
+            """Real Balloons"""
+            def index(self):
+                return
+
+        app = Flask('test')
+        Balloons.register(app)
+
+        assert (
+            generate_everything(app, TITLE, VERSION)['tags'] ==
+            [{'name': "Balloons", 'description': "Real Balloons"}]
+        )
 
 
 class TestGetDocs(object):
