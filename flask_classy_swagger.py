@@ -69,7 +69,8 @@ def get_docs(function):
         return '', ''
 
 
-def generate_docs(app, title, version, base_path=None):
+def generate_everything(app, title, version, base_path=None):
+    """Build the whole swagger JSON tree for this app"""
     paths = defaultdict(dict)
     for rule in app.url_map.iter_rules():
         if is_ignored(rule):
@@ -95,5 +96,5 @@ def swaggerify(
         app, title, version, swagger_path=SWAGGER_PATH, base_path=None):
     @app.route(swagger_path)
     def swagger():
-        docs = generate_docs(app, title, version, base_path)
+        docs = generate_everything(app, title, version, base_path)
         return jsonify(docs)

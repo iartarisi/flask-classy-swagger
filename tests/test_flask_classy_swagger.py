@@ -6,7 +6,7 @@ from flask.ext.classy import FlaskView
 import mock
 
 from flask_classy_swagger import (
-    generate_docs,
+    generate_everything,
     get_docs,
     get_path,
     schema,
@@ -44,7 +44,7 @@ class TestSwaggerify(object):
         assert json.loads(response.data) == BASIC_SCHEMA
 
 
-class TestGenerateDocs(object):
+class TestGenerateEverything(object):
     def test_index(self):
         class Balloons(FlaskView):
             def index(self):
@@ -58,7 +58,7 @@ class TestGenerateDocs(object):
         Balloons.register(app)
 
         assert (
-            generate_docs(app, TITLE, VERSION) ==
+            generate_everything(app, TITLE, VERSION) ==
             dict(BASIC_SCHEMA,
                  **{'paths': {
                      '/balloons': {
@@ -81,7 +81,7 @@ class TestGenerateDocs(object):
         Balloons.register(app)
 
         assert (
-            generate_docs(app, TITLE, VERSION) ==
+            generate_everything(app, TITLE, VERSION) ==
             dict(BASIC_SCHEMA,
                  **{'paths': {
                      '/balloons': {
