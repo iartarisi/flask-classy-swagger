@@ -65,7 +65,7 @@ def get_docs(function):
             function.func_doc.strip(),
             re.MULTILINE | re.DOTALL | re.VERBOSE
         ).groups()
-    except AttributeError, TypeError:
+    except (AttributeError, TypeError):
         return '', ''
 
 
