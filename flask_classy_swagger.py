@@ -72,7 +72,13 @@ def get_docs(function):
         return '', ''
 
 
-def get_flask_classy_class(method):
+def undecorate(method):
+    """Return the initial method written by the user
+
+    Try to drill through all decorators and find the actual method the
+    user implemented.
+
+    """
     # XXX might not work on python3
     if method.func_closure is None:
         return
@@ -80,11 +86,18 @@ def get_flask_classy_class(method):
     for cell in method.func_closure:
         try:
             if issubclass(cell.cell_contents.im_class, FlaskView):
-                return cell.cell_contents.im_class
+                return cell.cell_contents
         except AttributeError:
             pass
     else:
         return
+
+
+def get_flask_classy_class(method):
+    actual_method = undecorate(method)
+    if actual_method is None:
+        return None
+    return actual_method.im_class
 
 
 def get_tag_description(func):
