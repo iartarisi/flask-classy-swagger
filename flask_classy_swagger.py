@@ -1,3 +1,4 @@
+import inspect
 import re
 from collections import defaultdict
 
@@ -106,8 +107,16 @@ def get_tag_description(func):
         return klass.__doc__ or ''
 
 
-def get_parameters(func):
-    return []
+def get_parameters(method):
+    actual_method = undecorate(method)
+    if actual_method is None:
+        return []
+
+    args = inspect.getargspec(actual_method).args
+    if args[0] == 'self':  # assert this?
+        args.pop(0)
+
+    return [{"name": p} for p in args]
 
 
 def generate_everything(app, title, version, base_path=None):

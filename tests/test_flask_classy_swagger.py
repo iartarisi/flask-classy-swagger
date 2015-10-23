@@ -89,6 +89,9 @@ class TestPaths(object):
                         'summary': 'Create a new balloon',
                         'description':
                         'Detailed instructions for creating a balloon',
+                        'parameters': [
+                            {'name': "balloon"}
+                        ],
                         'tags': ['Balloons']}}})
 
 
@@ -191,7 +194,9 @@ class TestParams(object):
         assert generate_everything(
             app, TITLE, VERSION)[
                 'paths']['/balloons']['post']['parameters'] == (
-                {})
+                [{
+                    "name": "balloon"
+                }])
 
 
 class TestGetPath(object):
