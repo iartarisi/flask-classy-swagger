@@ -66,6 +66,7 @@ class TestPaths(object):
                         'summary': 'Show all the balloons',
                         'description':
                         'Detailed instructions for what to do with balloons',
+                        'parameters': [],
                         'tags': ['Balloons']}}})
 
     def test_post_route(self):
@@ -164,6 +165,33 @@ class TestGetDocs(object):
             """
 
         assert get_docs(func) == ('Who does this?!', '')
+
+
+class TestParams(object):
+    def test_index_no_params(self):
+        class Balloons(FlaskView):
+            def index(self):
+                return []
+
+        app = Flask('test')
+        Balloons.register(app)
+
+        assert generate_everything(
+            app, TITLE, VERSION)[
+                'paths']['/balloons']['get']['parameters'] == []
+
+    def test_post_params(self):
+        class Balloons(FlaskView):
+            def post(self, balloon):
+                return balloon
+
+        app = Flask('test')
+        Balloons.register(app)
+
+        assert generate_everything(
+            app, TITLE, VERSION)[
+                'paths']['/balloons']['post']['parameters'] == (
+                {})
 
 
 class TestGetPath(object):

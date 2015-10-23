@@ -93,6 +93,10 @@ def get_tag_description(func):
         return klass.__doc__ or ''
 
 
+def get_parameters(func):
+    return []
+
+
 def generate_everything(app, title, version, base_path=None):
     """Build the whole swagger JSON tree for this app"""
     paths = defaultdict(dict)
@@ -106,6 +110,7 @@ def generate_everything(app, title, version, base_path=None):
         path_item_name = resolve_method(rule)
         func = app.view_functions[rule.endpoint]
         summary, description = get_docs(func)
+        parameters = get_parameters(func)
 
         tag = get_tag(rule)
         if tag not in tags:
@@ -114,7 +119,9 @@ def generate_everything(app, title, version, base_path=None):
         path_item_object = {
             "summary": summary,
             "description": description,
-            "tags": [tag]}
+            "tags": [tag],
+            "parameters": parameters
+        }
         paths[path][path_item_name] = path_item_object
 
     docs = schema(title, version, base_path)
