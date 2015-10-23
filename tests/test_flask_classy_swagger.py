@@ -185,7 +185,7 @@ class TestParams(object):
 
     def test_post_params(self):
         class Balloons(FlaskView):
-            def post(self, balloon):
+            def post(self, balloon, string, color='red', helium=True):
                 return balloon
 
         app = Flask('test')
@@ -197,7 +197,15 @@ class TestParams(object):
                 [{
                     'name': "balloon",
                     'required': True
-                }])
+                }, {
+                    'name': "string",
+                    'required': True
+                }, {
+                    'name': "color",
+                    'required': False
+                }, {
+                    'name': "helium",
+                    'required': False}])
 
 
 class TestGetPath(object):

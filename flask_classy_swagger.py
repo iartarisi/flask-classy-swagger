@@ -49,7 +49,7 @@ def get_path(rule):
 
     # try to strip the end of the path which are usually parameters
     reversed = rule.rule[::-1]
-    return re.sub(r'(>\w+\</)', '', reversed, count=1)[::-1].rstrip('/')
+    return re.sub(r'(>\w+\</)', '', reversed)[::-1].rstrip('/')
 
 
 def get_tag(rule):
@@ -112,14 +112,29 @@ def get_parameters(method):
     if actual_method is None:
         return []
 
-    args = inspect.getargspec(actual_method).args
-    if args[0] == 'self':  # assert this?
-        args.pop(0)
+    argspec = inspect.getargspec(actual_method)
+    if argspec.defaults is None:
+        optional = []
+        required = [
+            {'name': p, 'required': True}
+            for p in argspec.args
+        ]
+    else:
+        optional = [
+            {'name': p, 'required': False}
+            # go from back to front because of the way getargspec returns
+            # args and defaults
+            for p, d in zip(argspec.args[::-1], argspec.defaults[::-1])[::-1]
+        ]
+        required = [
+            {'name': p, 'required': True}
+            for p in argspec.args[:-len(argspec.defaults)]
+        ]
 
-    return [
-        {'name': p,
-         'required': True}
-        for p in args]
+    if required and required[0]['name'] == 'self':  # assert this?
+        required.pop(0)
+
+    return required + optional
 
 
 def generate_everything(app, title, version, base_path=None):
