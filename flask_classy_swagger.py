@@ -116,7 +116,10 @@ def get_parameters(method):
     if args[0] == 'self':  # assert this?
         args.pop(0)
 
-    return [{"name": p} for p in args]
+    return [
+        {'name': p,
+         'required': True}
+        for p in args]
 
 
 def generate_everything(app, title, version, base_path=None):

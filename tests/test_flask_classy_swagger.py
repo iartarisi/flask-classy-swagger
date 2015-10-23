@@ -89,9 +89,9 @@ class TestPaths(object):
                         'summary': 'Create a new balloon',
                         'description':
                         'Detailed instructions for creating a balloon',
-                        'parameters': [
-                            {'name': "balloon"}
-                        ],
+                        'parameters': [{
+                            'name': "balloon",
+                            'required': True}],
                         'tags': ['Balloons']}}})
 
 
@@ -195,7 +195,8 @@ class TestParams(object):
             app, TITLE, VERSION)[
                 'paths']['/balloons']['post']['parameters'] == (
                 [{
-                    "name": "balloon"
+                    'name': "balloon",
+                    'required': True
                 }])
 
 
