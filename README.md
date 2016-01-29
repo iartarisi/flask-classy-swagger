@@ -4,6 +4,8 @@ Generate [Swagger](http://swagger.io/) API representations from [Flask Classy](h
 
 ## Quickstart
 
+NOTE: This only works with python2 so far (mainly due to flask-classy itself only working with python2).
+
 TODO: create python package
 
 ```python
