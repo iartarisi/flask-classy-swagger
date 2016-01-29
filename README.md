@@ -20,7 +20,7 @@ class BaloonsView(FlaskView):
 
 app = Flask(__name__)
 BaloonsView.register(app)
-json.dumps(generate_docs(app, 'MyApp', '0.1.0')
+swaggerify(app, 'MyApp', '0.1.0', swagger_path='/swagger.json')
 ```
 
 
