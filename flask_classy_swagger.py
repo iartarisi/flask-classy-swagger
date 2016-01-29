@@ -59,7 +59,7 @@ def get_tag(rule):
 def get_docs(function):
     """Return (summary, description) tuple from the passed in function"""
     try:
-        return re.match(
+        summary, description = re.match(
             r"""
             (.+?$) # first (summary) line, non-greedy MULTILINE $
             \n?    # maybe a newline
@@ -71,6 +71,13 @@ def get_docs(function):
         ).groups()
     except (AttributeError, TypeError):
         return '', ''
+
+    # swagger ignores single newlines, but if it sees two consecutive
+    # newline characters (a blank line) the swagger UI break out of the
+    # "Implementation Notes" paragraph. AFAICS this is not in the
+    # swagger spec?
+    description = re.sub(r'\n\n+', '\n', description)
+    return summary, description
 
 
 def undecorate(method):
