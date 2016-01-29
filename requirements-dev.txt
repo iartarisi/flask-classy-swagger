@@ -1,4 +1,4 @@
-pytest
 flake8
-flake8-print
 flake8-import-order
+flake8-print
+pytest
