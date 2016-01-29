@@ -31,7 +31,7 @@ $ py.test tests
 
 ## License
 
-Copyright (c) 2015, Ionuț Arțăriși
+Copyright (c) 2015-2016, Ionuț Arțăriși
 
 Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
 
