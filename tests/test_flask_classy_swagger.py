@@ -158,7 +158,6 @@ class TestGetDocs(object):
         assert get_docs(func) == (
             "Look, I'm writing",
             """Proper
-
             docstrings""")
 
     def test_start_with_space(self):
