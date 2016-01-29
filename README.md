@@ -1,5 +1,7 @@
 # Flask Classy Swagger
 
+[![Build Status](https://travis-ci.org/mapleoin/flask-classy-swagger.svg?branch=master)](https://travis-ci.org/mapleoin/flask-classy-swagger)
+
 Generate [Swagger](http://swagger.io/) API representations from [Flask Classy](https://pythonhosted.org/Flask-Classy/) views.
 
 ## Quickstart
