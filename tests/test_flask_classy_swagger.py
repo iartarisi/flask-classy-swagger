@@ -45,6 +45,14 @@ class TestSwaggerify(object):
         assert json.loads(response.data) == BASIC_SCHEMA
 
 
+def swagger(resource):
+    """Generate an app having this sole resource and return the swagger dict"""
+    app = Flask('test')
+    resource.register(app)
+
+    return generate_everything(app, TITLE, VERSION)
+
+
 class TestPaths(object):
     def test_index(self):
         class Balloons(FlaskView):
@@ -55,19 +63,14 @@ class TestPaths(object):
                 """
                 pass
 
-        app = Flask('test')
-        Balloons.register(app)
-
-        assert (
-            generate_everything(app, TITLE, VERSION)['paths'] ==
-            {
-                '/balloons': {
-                    'get': {
-                        'summary': 'Show all the balloons',
-                        'description':
-                        'Detailed instructions for what to do with balloons',
-                        'parameters': [],
-                        'tags': ['Balloons']}}})
+        assert swagger(Balloons)['paths'] == {
+            '/balloons': {
+                'get': {
+                    'summary': 'Show all the balloons',
+                    'description':
+                    'Detailed instructions for what to do with balloons',
+                    'parameters': [],
+                    'tags': ['Balloons']}}}
 
     def test_post_route(self):
         class Balloons(FlaskView):
@@ -78,22 +81,17 @@ class TestPaths(object):
                 """
                 return balloon
 
-        app = Flask('test')
-        Balloons.register(app)
-
-        assert (
-            generate_everything(app, TITLE, VERSION)['paths'] ==
-            {
-                '/balloons/<balloon>': {
-                    'post': {
-                        'summary': 'Create a new balloon',
-                        'description':
-                        'Detailed instructions for creating a balloon',
-                        'parameters': [{
-                            'name': "balloon",
-                            'type': 'string',
-                            'required': True}],
-                        'tags': ['Balloons']}}})
+        assert swagger(Balloons)['paths'] == {
+            '/balloons/<balloon>': {
+                'post': {
+                    'summary': 'Create a new balloon',
+                    'description':
+                    'Detailed instructions for creating a balloon',
+                    'parameters': [{
+                        'name': "balloon",
+                        'type': 'string',
+                        'required': True}],
+                    'tags': ['Balloons']}}}
 
 
 class TestTags(object):
@@ -102,13 +100,8 @@ class TestTags(object):
             def index(self):
                 return
 
-        app = Flask('test')
-        Balloons.register(app)
-
-        assert (
-            generate_everything(app, TITLE, VERSION)['tags'] ==
-            [{'name': "Balloons", 'description': ""}]
-        )
+        assert swagger(Balloons)['tags'] == [
+            {'name': "Balloons", 'description': ""}]
 
     def test_simple(self):
         class Balloons(FlaskView):
@@ -116,13 +109,8 @@ class TestTags(object):
             def index(self):
                 return
 
-        app = Flask('test')
-        Balloons.register(app)
-
-        assert (
-            generate_everything(app, TITLE, VERSION)['tags'] ==
-            [{'name': "Balloons", 'description': "Real Balloons"}]
-        )
+        assert swagger(Balloons)['tags'] == [
+            {'name': "Balloons", 'description': "Real Balloons"}]
 
 
 class TestGetDocs(object):
@@ -176,23 +164,15 @@ class TestParams(object):
             def index(self):
                 return []
 
-        app = Flask('test')
-        Balloons.register(app)
-
-        assert generate_everything(
-            app, TITLE, VERSION)[
-                'paths']['/balloons']['get']['parameters'] == []
+        assert swagger(Balloons)[
+            'paths']['/balloons']['get']['parameters'] == []
 
     def test_post_params_in_path(self):
         class Balloons(FlaskView):
             def post(self, balloon, string, color='red', helium=True):
                 return balloon
 
-        app = Flask('test')
-        Balloons.register(app)
-
-        assert generate_everything(
-            app, TITLE, VERSION)[
+        assert swagger(Balloons)[
                 'paths'][
                     '/balloons/<balloon>/<string>/<color>/<helium>'
                 ]['post']['parameters'] == (
@@ -222,11 +202,7 @@ class TestParams(object):
             def put(self, balloon_id, color):
                 return
 
-        app = Flask('test')
-        Balloons.register(app)
-
-        paths = generate_everything(app, TITLE, VERSION)['paths']
-        assert paths[
+        assert swagger(Balloons)['paths'][
             test_route_base + '/<color>'
             ]['put']['parameters'] == (
                 [{
