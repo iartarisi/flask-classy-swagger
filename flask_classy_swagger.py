@@ -24,7 +24,7 @@ def schema(title, version, base_path=None):
     return schema
 
 
-def resolve_method(rule):
+def http_verb(rule):
     # trying to get over rule.methods like: set(['HEAD', 'OPTIONS', 'GET'])
     for m in rule.methods:
         if m in ['GET', 'POST', 'PUT', 'DELETE']:
@@ -154,7 +154,6 @@ def generate_everything(app, title, version, base_path=None):
 
         path = get_path(rule)
 
-        path_item_name = resolve_method(rule)
         func = app.view_functions[rule.endpoint]
         summary, description = get_docs(func)
         parameters = get_parameters(func)
@@ -169,6 +168,7 @@ def generate_everything(app, title, version, base_path=None):
             "tags": [tag],
             "parameters": parameters
         }
+        path_item_name = http_verb(rule)
         paths[path][path_item_name] = path_item_object
 
     docs = schema(title, version, base_path)
