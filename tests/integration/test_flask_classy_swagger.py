@@ -130,7 +130,7 @@ class TestParams(object):
                 [{
                     'name': 'balloon_id',
                     'in': 'path',
-                    'type': 'string',
+                    'type': 'int',
                     'required': True},
                  {
                     'name': 'color',
