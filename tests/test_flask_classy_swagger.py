@@ -84,7 +84,7 @@ class TestPaths(object):
         assert (
             generate_everything(app, TITLE, VERSION)['paths'] ==
             {
-                '/balloons': {
+                '/balloons/<balloon>': {
                     'post': {
                         'summary': 'Create a new balloon',
                         'description':
@@ -183,7 +183,7 @@ class TestParams(object):
             app, TITLE, VERSION)[
                 'paths']['/balloons']['get']['parameters'] == []
 
-    def test_post_params(self):
+    def test_post_params_in_path(self):
         class Balloons(FlaskView):
             def post(self, balloon, string, color='red', helium=True):
                 return balloon
@@ -193,7 +193,9 @@ class TestParams(object):
 
         assert generate_everything(
             app, TITLE, VERSION)[
-                'paths']['/balloons']['post']['parameters'] == (
+                'paths'][
+                    '/balloons/<balloon>/<string>/<color>/<helium>'
+                ]['post']['parameters'] == (
                 [{
                     'name': "balloon",
                     'required': True,
@@ -211,6 +213,31 @@ class TestParams(object):
                     'type': 'string',
                     'required': False}])
 
+    def test_put_params_extend_route_base(self):
+        test_route_base = '/<int:balloon_id>/balloon'
+
+        class Balloons(FlaskView):
+            route_base = test_route_base
+
+            def put(self, balloon_id, color):
+                return
+
+        app = Flask('test')
+        Balloons.register(app)
+
+        paths = generate_everything(app, TITLE, VERSION)['paths']
+        assert paths[
+            test_route_base + '/<color>'
+            ]['put']['parameters'] == (
+                [{
+                    'name': 'balloon_id',
+                    'type': 'string',
+                    'required': True},
+                 {
+                    'name': 'color',
+                    'type': 'string',
+                    'required': True}])
+
 
 class TestGetPath(object):
     def test_root_path(self):
@@ -222,7 +249,7 @@ class TestGetPath(object):
         assert _get_path('/foo') == '/foo'
 
     def test_path_with_one_arg(self):
-        assert _get_path('/foo/<bar>') == '/foo'
+        assert _get_path('/foo/<bar>') == '/foo/<bar>'
 
 
 def _get_path(rule_rule):

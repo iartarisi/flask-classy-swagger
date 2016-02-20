@@ -48,9 +48,7 @@ def get_path(rule):
     if rule.rule == '/':
         return '/'
 
-    # try to strip the end of the path which are usually parameters
-    reversed = rule.rule[::-1]
-    return re.sub(r'(>\w+\</)', '', reversed)[::-1].rstrip('/')
+    return rule.rule.rstrip('/')
 
 
 def get_tag(rule):
