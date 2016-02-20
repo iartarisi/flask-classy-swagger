@@ -84,7 +84,12 @@ def get_docs(function):
 def get_flask_classy_class(method):
     if method is None:
         return None
-    return method.im_class
+
+    try:
+        return method.im_class
+    # probably an (unsupported) un-flask-classy endpoint
+    except AttributeError:
+        return None
 
 
 def get_tag_description(func):
