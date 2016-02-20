@@ -91,6 +91,7 @@ class TestPaths(object):
                         'Detailed instructions for creating a balloon',
                         'parameters': [{
                             'name': "balloon",
+                            'type': 'string',
                             'required': True}],
                         'tags': ['Balloons']}}})
 
@@ -195,15 +196,19 @@ class TestParams(object):
                 'paths']['/balloons']['post']['parameters'] == (
                 [{
                     'name': "balloon",
-                    'required': True
+                    'required': True,
+                    'type': 'string',
                 }, {
                     'name': "string",
+                    'type': 'string',
                     'required': True
                 }, {
                     'name': "color",
+                    'type': 'string',
                     'required': False
                 }, {
                     'name': "helium",
+                    'type': 'string',
                     'required': False}])
 
 

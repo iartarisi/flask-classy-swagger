@@ -104,6 +104,7 @@ def get_parameters(method):
 
     argspec = inspect.getargspec(method)
     if argspec.defaults is None:
+        # all are required
         optional = []
         required = [
             {'name': p, 'required': True}
@@ -124,7 +125,11 @@ def get_parameters(method):
     if required and required[0]['name'] == 'self':  # assert this?
         required.pop(0)
 
-    return required + optional
+    # XXX just assumes all are strings for now
+    all_args = [dict(p, type='string')
+                for p in required + optional]
+
+    return all_args
 
 
 def get_api_method(app, rule):
