@@ -91,9 +91,9 @@ class TestParams(object):
                 return balloon
 
         assert swagger(Balloons)[
-                'paths'][
-                    '/balloons/<balloon>/<string>/<color>/<helium>'
-                ]['post']['parameters'] == (
+            'paths'][
+                '/balloons/<balloon>/<string>/<color>/<helium>'
+            ]['post']['parameters'] == (
                 [{
                     'name': "balloon",
                     'required': True,
@@ -126,15 +126,15 @@ class TestParams(object):
 
         assert swagger(Balloons)['paths'][
             test_route_base + '/<color>'
-            ]['put']['parameters'] == (
-                [{
-                    'name': 'balloon_id',
-                    'in': 'path',
-                    'type': 'integer',
-                    'format': 'int32',
-                    'required': True},
-                 {
-                    'name': 'color',
-                    'in': 'path',
-                    'type': 'string',
-                    'required': True}])
+        ]['put']['parameters'] == (
+            [{
+                'name': 'balloon_id',
+                'in': 'path',
+                'type': 'integer',
+                'format': 'int32',
+                'required': True},
+             {
+                 'name': 'color',
+                 'in': 'path',
+                 'type': 'string',
+                 'required': True}])
