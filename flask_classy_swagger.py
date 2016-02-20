@@ -2,9 +2,10 @@ import inspect
 import re
 from collections import defaultdict
 
+
 from flask import jsonify
 
-from flask_classy import FlaskView
+from undecorated import undecorated
 
 
 SWAGGER_VERSION = '2.0'
@@ -80,32 +81,10 @@ def get_docs(function):
     return summary, description
 
 
-def undecorate(method):
-    """Return the initial method written by the user
-
-    Try to drill through all decorators and find the actual method the
-    user implemented.
-
-    """
-    # XXX might not work on python3
-    if method.func_closure is None:
-        return
-
-    for cell in method.func_closure:
-        try:
-            if issubclass(cell.cell_contents.im_class, FlaskView):
-                return cell.cell_contents
-        except AttributeError:
-            pass
-    else:
-        return
-
-
 def get_flask_classy_class(method):
-    actual_method = undecorate(method)
-    if actual_method is None:
+    if method is None:
         return None
-    return actual_method.im_class
+    return method.im_class
 
 
 def get_tag_description(func):
@@ -115,11 +94,10 @@ def get_tag_description(func):
 
 
 def get_parameters(method):
-    actual_method = undecorate(method)
-    if actual_method is None:
+    if method is None:
         return []
 
-    argspec = inspect.getargspec(actual_method)
+    argspec = inspect.getargspec(method)
     if argspec.defaults is None:
         optional = []
         required = [
@@ -144,6 +122,18 @@ def get_parameters(method):
     return required + optional
 
 
+def get_api_method(app, rule):
+    """Return the original Flask-Classy method as the user first wrote it
+
+    This means without any decorators applied.
+
+    :app: a Flask app object
+    :rule: a werkzeug.routing.Rule object
+
+    """
+    return undecorated(app.view_functions[rule.endpoint])
+
+
 def generate_everything(app, title, version, base_path=None):
     """Build the whole swagger JSON tree for this app"""
     paths = defaultdict(dict)
@@ -154,13 +144,13 @@ def generate_everything(app, title, version, base_path=None):
 
         path = get_path(rule)
 
-        func = app.view_functions[rule.endpoint]
-        summary, description = get_docs(func)
-        parameters = get_parameters(func)
+        method = get_api_method(app, rule)
+        summary, description = get_docs(method)
+        parameters = get_parameters(method)
 
         tag = get_tag(rule)
         if tag not in tags:
-            tags[tag] = get_tag_description(func)
+            tags[tag] = get_tag_description(method)
 
         path_item_object = {
             "summary": summary,
