@@ -96,7 +96,22 @@ def get_tag_description(func):
         return klass.__doc__ or ''
 
 
-def get_parameters(method):
+def get_parameter_types(rule):
+    """Parse the werkzeug rule to get the parameter types"""
+    param_types = {}
+    for type_, param in re.findall(r'\/<(\w+):(.*)>\/', rule.rule):
+        param_types[param] = type_
+
+    return param_types
+
+
+def get_parameters(rule, method):
+    """Return parameters for the passed-in method
+
+    Currently only returns 'path' parameters i.e. there is no support
+    for 'body' params.
+
+    """
     if method is None:
         return []
 
@@ -123,13 +138,18 @@ def get_parameters(method):
     if required and required[0]['name'] == 'self':  # assert this?
         required.pop(0)
 
-    # they are all path arguments because flask-classy puts them there
-    # if they are method parameters
-    # TODO get the actual type rather than assuming everything is a string
-    all_args = [dict({'type': 'string', 'in': 'path'}, **p)
-                for p in required + optional]
+    param_types = get_parameter_types(rule)
+    return [
+        dict(
+            # we can only get parameter types for parameters included
+            # in the rule; we assume the others are 'string'
+            {'type': param_types.get(p['name'], 'string'),
 
-    return all_args
+             # they are all path arguments because flask-classy puts them there
+             # if they are method parameters
+             'in': 'path'},
+            **p)
+        for p in required + optional]
 
 
 def get_api_method(app, rule):
@@ -156,7 +176,7 @@ def generate_everything(app, title, version, base_path=None):
 
         method = get_api_method(app, rule)
         summary, description = get_docs(method)
-        parameters = get_parameters(method)
+        parameters = get_parameters(rule, method)
 
         tag = get_tag(rule)
         if tag not in tags:
