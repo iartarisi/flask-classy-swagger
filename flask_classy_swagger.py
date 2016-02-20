@@ -12,6 +12,16 @@ SWAGGER_VERSION = '2.0'
 SWAGGER_PATH = '/swagger.json'
 IGNORED_RULES = ['/static', SWAGGER_PATH]
 
+# map from werkzeug url param converters to swagger (type, format)
+WERKZEUG_SWAGGER_TYPES = {
+    'int': ('integer', 'int32'),
+    'float': ('number', 'float'),
+    'uuid': ('string', 'uuid'),
+    'string': ('string', None),
+}
+# anything else is the default type below:
+DEFAULT_TYPE = ('string', None)
+
 
 def schema(title, version, base_path=None):
     schema = {"swagger": SWAGGER_VERSION,
@@ -100,7 +110,8 @@ def get_parameter_types(rule):
     """Parse the werkzeug rule to get the parameter types"""
     param_types = {}
     for type_, param in re.findall(r'\/<(\w+):(.*)>\/', rule.rule):
-        param_types[param] = type_
+        param_types[param] = WERKZEUG_SWAGGER_TYPES.get(
+            type_, DEFAULT_TYPE)
 
     return param_types
 
@@ -139,17 +150,17 @@ def get_parameters(rule, method):
         required.pop(0)
 
     param_types = get_parameter_types(rule)
-    return [
-        dict(
-            # we can only get parameter types for parameters included
-            # in the rule; we assume the others are 'string'
-            {'type': param_types.get(p['name'], 'string'),
-
-             # they are all path arguments because flask-classy puts them there
-             # if they are method parameters
-             'in': 'path'},
-            **p)
-        for p in required + optional]
+    parameters = []
+    for p in required + optional:
+        type_, format_ = param_types.get(p['name'], DEFAULT_TYPE)
+        p['type'] = type_
+        if format_:
+            p['format'] = format_
+        # they are all path arguments because flask-classy puts them
+        # there if they are method parameters
+        p['in'] = 'path'
+        parameters.append(p)
+    return parameters
 
 
 def get_api_method(app, rule):
