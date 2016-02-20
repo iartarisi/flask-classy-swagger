@@ -123,8 +123,10 @@ def get_parameters(method):
     if required and required[0]['name'] == 'self':  # assert this?
         required.pop(0)
 
-    # XXX just assumes all are strings for now
-    all_args = [dict(p, type='string')
+    # they are all path arguments because flask-classy puts them there
+    # if they are method parameters
+    # TODO get the actual type rather than assuming everything is a string
+    all_args = [dict({'type': 'string', 'in': 'path'}, **p)
                 for p in required + optional]
 
     return all_args
