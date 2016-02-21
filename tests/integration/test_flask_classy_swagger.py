@@ -44,7 +44,7 @@ class TestPaths(object):
                 return balloon
 
         assert swagger(Balloons)['paths'] == {
-            '/balloons/<balloon>': {
+            '/balloons/{balloon}': {
                 'post': {
                     'summary': 'Create a new balloon',
                     'description':
@@ -92,7 +92,7 @@ class TestParams(object):
 
         assert swagger(Balloons)[
             'paths'][
-                '/balloons/<balloon>/<string>/<color>/<helium>'
+                '/balloons/{balloon}/{string}/{color}/{helium}'
             ]['post']['parameters'] == (
                 [{
                     'name': "balloon",
@@ -116,16 +116,14 @@ class TestParams(object):
                     'required': False}])
 
     def test_put_params_extend_route_base(self):
-        test_route_base = '/<int:balloon_id>/balloon'
-
         class Balloons(FlaskView):
-            route_base = test_route_base
+            route_base = '/<int:balloon_id>/balloon'
 
             def put(self, balloon_id, color):
                 return
 
         assert swagger(Balloons)['paths'][
-            test_route_base + '/<color>'
+            '/{balloon_id}/balloon/{color}'
         ]['put']['parameters'] == (
             [{
                 'name': 'balloon_id',

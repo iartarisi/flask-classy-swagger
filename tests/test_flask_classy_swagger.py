@@ -89,7 +89,7 @@ class TestGetPath(object):
         assert _get_path('/foo') == '/foo'
 
     def test_path_with_one_arg(self):
-        assert _get_path('/foo/<bar>') == '/foo/<bar>'
+        assert _get_path('/foo/<bar>') == '/foo/{bar}'
 
 
 def _get_path(rule_rule):
