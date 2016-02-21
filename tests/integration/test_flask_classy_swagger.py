@@ -119,7 +119,7 @@ class TestParams(object):
         class Balloons(FlaskView):
             route_base = '/<int:balloon_id>/balloon'
 
-            def put(self, balloon_id, color):
+            def put(self, balloon_id, color='red'):
                 return
 
         assert swagger(Balloons)['paths'][
@@ -135,4 +135,4 @@ class TestParams(object):
                  'name': 'color',
                  'in': 'path',
                  'type': 'string',
-                 'required': True}])
+                 'required': False}])

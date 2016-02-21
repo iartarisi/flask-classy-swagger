@@ -4,11 +4,14 @@
 
 Generate [Swagger](http://swagger.io/) API representations from [Flask Classy](https://pythonhosted.org/Flask-Classy/) views.
 
-## Quickstart
+Flask-Classy-Swagger aims to allow you to generate a swagger representation of your API without writing anything specific to it. It uses the code and documentation you already have (by introspecting methods) and does not add its own markup language to define swagger-specific metadata. It's even compatible (but slightly less useful) with normal non-Flask-Classy Flask endpoints.
 
 NOTE: This only works with python2 so far (mainly due to flask-classy itself only working with python2).
 
-TODO: create python package
+**This is an alpha-version work in progress! Most swagger features are not yet supported and the format and requirements might change.**
+
+
+## Quickstart
 
 Put this in a file, e.g. `app.py`:
 
@@ -83,6 +86,95 @@ $ curl http://127.0.0.1:5000/swagger.json
   ]
 }
 ```
+
+## Features
+
+### Resource description
+
+Taken from the original class's docstring:
+
+```python
+class Balloons(FlaskView):
+    """This here!"""
+    def index(self):
+        return []
+```
+
+becomes:
+
+```json
+"tags": [
+    {
+      "description": "I love balloons",
+      "name": "BaloonsView"
+    }
+  ]
+```
+
+### Resource verb summary and description
+
+Taken from the original method's docstring:
+
+```python
+class Balloons(FlaskView):
+    def post(self, balloon):
+        """The first line is the summary!
+
+        All the rest goes in the description.
+        """
+        return balloon
+```
+
+becomes:
+
+```json
+...
+"/balloons/{balloon}": {
+    "post": {
+        "summary": "The first line is the summary!",
+        "description":
+        "All the rest goes in the description.",
+        ...
+}}
+```
+
+
+### Path parameters
+
+Path parameters are taken from the Flask app's urlmap and the Flask-Classy method where they were defined. They are marked as required or not based on whether they are args or kwargs in the original method. The only way to specify the type of a parameter currently is with [werkzeug's converter format](http://werkzeug.pocoo.org/docs/0.11/routing/#builtin-converters):
+
+```python
+class Balloons(FlaskView):
+    route_base = '/<int:balloon_id>/balloon'
+
+    def put(self, balloon_id, color='red'):
+        return
+```
+
+becomes:
+
+```json
+...
+{"/{balloon_id}/balloon/{color}":
+    {"put":
+        {"parameters": [
+             {
+                "name": "balloon_id",
+                "in": "path",
+                "type": "integer",
+                "format": "int32",
+                "required": true},
+             {
+                 "name": "color",
+                 "in": "path",
+                 "type": "string",
+                 "required": false}]}}}
+...
+```
+
+## TODO
+
+### Body data parameters
 
 ## Testing
 
