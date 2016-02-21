@@ -58,7 +58,12 @@ def get_path(rule):
     if rule.rule == '/':
         return '/'
 
-    return rule.rule.rstrip('/')
+    # swagger prefers curly braces to angle brackets
+    # we also need to remove the type declaration e.g. '<int:'
+    path = re.sub('<(?:\w+:)?', '{', rule.rule)
+    path = path.replace('>', '}')
+    # and no ending slash
+    return path.rstrip('/')
 
 
 def get_tag(rule):
