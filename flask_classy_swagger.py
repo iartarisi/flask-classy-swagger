@@ -91,6 +91,7 @@ def get_docs(function):
     # "Implementation Notes" paragraph. AFAICS this is not in the
     # swagger spec?
     description = re.sub(r'\n\n+', '\n', description)
+    description = re.sub(r'\n[ \t]*---[ \t]*\n+', '\n', description)
     return summary, description
 
 
