@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 
 from flask_classy import FlaskView
 
@@ -23,7 +23,7 @@ class TestPaths(object):
 
                 Detailed instructions for what to do with balloons
                 """
-                pass
+                return jsonify([])
 
         assert swagger(Balloons)['paths'] == {
             '/balloons': {
@@ -32,6 +32,11 @@ class TestPaths(object):
                     'description':
                     'Detailed instructions for what to do with balloons',
                     'parameters': [],
+                    'responses': {
+                        '200': {
+                            'description': 'Success'
+                        }
+                    },
                     'tags': ['Balloons']}}}
 
     def test_post_route(self):
@@ -41,7 +46,7 @@ class TestPaths(object):
 
                 Detailed instructions for creating a balloon
                 """
-                return balloon
+                return jsonify(balloon)
 
         assert swagger(Balloons)['paths'] == {
             '/balloons/{balloon}': {
@@ -54,6 +59,11 @@ class TestPaths(object):
                         'in': 'path',
                         'type': 'string',
                         'required': True}],
+                    'responses': {
+                        '200': {
+                            'description': 'Success',
+                        }
+                    },
                     'tags': ['Balloons']}}}
 
 
@@ -136,3 +146,18 @@ class TestParams(object):
                  'in': 'path',
                  'type': 'string',
                  'required': False}])
+
+
+class TestReturnJsonify(object):
+    def test_simple_jsonify_get(self):
+        class Balloons(FlaskView):
+            def get(self):
+                return jsonify({})
+
+        assert swagger(Balloons)['paths'][
+            '/balloons'
+        ]['get']['responses'] == {
+            '200': {
+                'description': 'Success'
+            }
+        }
