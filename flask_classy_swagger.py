@@ -1,3 +1,4 @@
+import ast
 import inspect
 import re
 from collections import defaultdict
@@ -180,6 +181,30 @@ def get_api_method(app, rule):
     return undecorated(app.view_functions[rule.endpoint])
 
 
+def get_status_code(method):
+    class MyVisitor(ast.NodeVisitor):
+        status_code = 'unknown'
+
+        def visit_Return(self, node):
+            # assume that returning the result of a jsonify call (note:
+            # we don't even know if this is flask's jsonify or if it
+            # comes from a different module) means the status code is
+            # 200
+            if (
+                    node.value and
+                    # TODO fix the ugly
+                    isinstance(node.value, ast.Call) and
+                    node.value.func.id == 'jsonify'
+            ):
+                self.status_code = '200'
+
+    visitor = MyVisitor()
+    visitor.visit(
+        ast.parse(
+            inspect.getsource(method).strip()))
+    return visitor.status_code
+
+
 def generate_everything(app, title, version, base_path=None):
     """Build the whole swagger JSON tree for this app"""
     paths = defaultdict(dict)
@@ -191,6 +216,8 @@ def generate_everything(app, title, version, base_path=None):
         path = get_path(rule)
 
         method = get_api_method(app, rule)
+
+        status_code = get_status_code(method)
         summary, description = get_docs(method)
         parameters = get_parameters(rule, method)
 
@@ -202,7 +229,13 @@ def generate_everything(app, title, version, base_path=None):
             "summary": summary,
             "description": description,
             "tags": [tag],
-            "parameters": parameters
+            "parameters": parameters,
+            "responses": {
+                status_code: {
+                    # TODO think of a better way to get descriptions
+                    'description': 'Success'
+                }
+            }
         }
         path_item_name = http_verb(rule)
         paths[path][path_item_name] = path_item_object
