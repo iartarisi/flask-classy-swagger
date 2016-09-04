@@ -105,7 +105,7 @@ becomes:
 ```json
 "tags": [
     {
-      "description": "I love balloons",
+      "description": "This here!",
       "name": "BaloonsView"
     }
   ]
