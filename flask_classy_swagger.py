@@ -100,12 +100,16 @@ def get_docs(function):
     # swagger spec?
     description = re.sub(r'\n\n+', '\n', description)
     # Anything after --- is yaml for this function
-    desc_yaml = re.split(r'\n[ \t]*---[ \t]*\n+', description)
+    desc_yaml = re.split(r'\n?[ \t]*---[ \t]*\n+', description)
 
     yaml = None
     if len(desc_yaml) > 1:
         description = desc_yaml[0]
         yaml = desc_yaml[1]
+
+    if not description:
+        description = None
+
     return (summary, description, yaml)
 
 
