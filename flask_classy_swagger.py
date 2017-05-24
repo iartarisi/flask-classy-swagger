@@ -292,7 +292,7 @@ def generate_everything(app, title, version, base_path=None):
 
         # so if we had some responses and there is no default error, just add a default one
         # for completeness
-        if "responses" in path_item_object and "default" not in path_item_object["responses"]:
+        if "responses" in path_item_object and "default" not in path_item_object["responses"] and "200" not in path_item_object["responses"]:
             path_item_object["responses"]["default"] = {
                     "description" : "Unexpected error",
                     "schema" : "#/definitions/Error",
