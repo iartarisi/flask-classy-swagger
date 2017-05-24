@@ -1,13 +1,10 @@
 import ast
 import inspect
 import re
+import textwrap
 from collections import defaultdict
-
-
 from flask import jsonify
-
 from undecorated import undecorated
-
 import logging
 
 
@@ -219,9 +216,11 @@ def get_status_code(method):
                 self.status_code = '200'
 
     visitor = MyVisitor()
-    visitor.visit(
-        ast.parse(
-            inspect.getsource(method).strip()))
+    method_source = inspect.getsource(method)
+    # remove common extra indenting
+    method_source = textwrap.dedent(method_source)
+    method_ast = ast.parse(method_source)
+    visitor.visit(method_ast)
     return visitor.status_code
 
 
