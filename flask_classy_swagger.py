@@ -207,9 +207,14 @@ def get_status_code(method):
             # we don't even know if this is flask's jsonify or if it
             # comes from a different module) means the status code is
             # 200
-            if node.value and isinstance(node.value, ast.Attribute) and node.value.func.value.id == 'jsonify':
+            if node.value and isinstance(node.value, ast.Attribute) and hasattr(node.value, 'func') and node.value.func.value.id == 'jsonify':
+                # ???
                 self.status_code = 200
-            if isinstance(node.value, ast.Call) and node.value.func.id == 'jsonify':
+            elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute):
+                # this is a method call. ignore?
+                pass
+            elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id == 'jsonify':
+                # return jsonify(...)
                 self.status_code = 200
 
     visitor = MyVisitor()
@@ -300,9 +305,7 @@ def generate_everything(app, title, version, base_path=None):
     return docs
 
 
-def swaggerify(
-        app, title, version, swagger_path=SWAGGER_PATH, base_path=None):
-    logging.debug("in swaggerify")
+def swaggerify(app, title, version, swagger_path=SWAGGER_PATH, base_path=None):
     @app.route(swagger_path)
     def swagger():
         docs = generate_everything(app, title, version, base_path)
