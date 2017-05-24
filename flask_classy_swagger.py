@@ -162,7 +162,7 @@ def get_parameters(rule, method):
             {'name': p, 'required': False}
             # go from back to front because of the way getargspec returns
             # args and defaults
-            for p, d in zip(argspec.args[::-1], argspec.defaults[::-1])[::-1]
+            for p, d in list(zip(argspec.args[::-1], argspec.defaults[::-1]))[::-1]
         ]
         required = [
             {'name': p, 'required': True}
@@ -207,13 +207,10 @@ def get_status_code(method):
             # we don't even know if this is flask's jsonify or if it
             # comes from a different module) means the status code is
             # 200
-            if (
-                    node.value and
-                    # TODO fix the ugly
-                    isinstance(node.value, ast.Call) and
-                    node.value.func.id == 'jsonify'
-            ):
-                self.status_code = '200'
+            if node.value and isinstance(node.value, ast.Attribute) and node.value.func.value.id == 'jsonify':
+                self.status_code = 200
+            if isinstance(node.value, ast.Call) and node.value.func.id == 'jsonify':
+                self.status_code = 200
 
     visitor = MyVisitor()
     method_source = inspect.getsource(method)
