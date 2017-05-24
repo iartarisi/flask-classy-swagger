@@ -78,7 +78,7 @@ def get_tag(rule):
 
 
 def get_docs(function):
-    """Return (summary, description, swagger-yaml) tuple from the passed in function"""
+    """Return (summary, description, swagger-yaml) tuple from the passed-in function."""
     try:
         summary, description = re.match(
             r"""
@@ -87,10 +87,11 @@ def get_docs(function):
             \s*    # maybe indentation to the beginning of the next line
             (.*)   # maybe multiple other lines DOTALL
             """,
-            function.func_doc.strip(),
+            function.__doc__.strip(),
             re.MULTILINE | re.DOTALL | re.VERBOSE
         ).groups()
-    except (AttributeError, TypeError):
+    except (AttributeError, TypeError) as err:
+        print("Failed to parse swagger docs: ", err)
         return '', ''
 
     # swagger ignores single newlines, but if it sees two consecutive
@@ -99,9 +100,13 @@ def get_docs(function):
     # swagger spec?
     description = re.sub(r'\n\n+', '\n', description)
     # Anything after --- is yaml for this function
-    lst = re.split(r'\n[ \t]*---[ \t]*\n+', description)
+    desc_yaml = re.split(r'\n[ \t]*---[ \t]*\n+', description)
 
-    return [summary] + lst
+    yaml = None
+    if len(desc_yaml) > 1:
+        description = desc_yaml[0]
+        yaml = desc_yaml[1]
+    return (summary, description, yaml)
 
 
 def get_flask_classy_class(method):
@@ -149,7 +154,7 @@ def get_parameters(rule, method):
     if method is None:
         return []
 
-    argspec = inspect.getargspec(method)
+    argspec = inspect.getfullargspec(method)
     if argspec.defaults is None:
         # all are required
         optional = []
@@ -160,7 +165,7 @@ def get_parameters(rule, method):
     else:
         optional = [
             {'name': p, 'required': False}
-            # go from back to front because of the way getargspec returns
+            # go from back to front because of the way getfullargspec returns
             # args and defaults
             for p, d in list(zip(argspec.args[::-1], argspec.defaults[::-1]))[::-1]
         ]
@@ -238,17 +243,9 @@ def generate_everything(app, title, version, base_path=None):
 
         method = get_api_method(app, rule)
         status_code = get_status_code(method)
-        summary, description = get_docs(method)
 
-        # SPLBIO code: extract from method comments
-        docs = get_docs(method)
-
-        summary = docs[0]
-        description = docs[1]
-        if len(docs) > 2:
-            yaml = docs[3]
-        else:
-            yaml = None
+        # extract (summary, desc, yaml) from method pydoc
+        summary, description, _ = get_docs(method)
 
         parameters = get_parameters(rule, method)
         schema_class = get_schema_class(rule, method)
