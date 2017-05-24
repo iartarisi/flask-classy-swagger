@@ -1,8 +1,8 @@
-﻿"""
-Flask-Sillywalk
+﻿"""Flask-Classy-Swagger.
+
 ---------------
 
-This is the description for that library
+Generate swagger definitions from Flask-Classy API modules.
 """
 from setuptools import setup, find_packages
 
@@ -12,10 +12,10 @@ with open('README.md') as f:
 
 setup(
     name='Flask-Classy-Swagger',
-    version='0.9',
-    url='https://github.com/splbio/flask-classy-swagger',
+    version='0.9.1',
+    url='https://github.com/jetbridge/flask-classy-swagger',
     license='BSD',
-    author='Ionuț Arțăriși and Alfred Perlstein',
+    author='Ionuț Arțăriși and Alfred Perlstein and Mischa Spiegelmock',
     author_email='alfred@freebsd.org',
     description='Autogenerate swagger from flask classy api',
     long_description=description,
