@@ -8,6 +8,8 @@ from flask import jsonify
 
 from undecorated import undecorated
 
+import logging
+
 
 SWAGGER_VERSION = '2.0'
 SWAGGER_PATH = '/swagger.json'
@@ -22,6 +24,13 @@ WERKZEUG_SWAGGER_TYPES = {
 }
 # anything else is the default type below:
 DEFAULT_TYPE = ('string', None)
+
+def set_dict_default(dikt, path, val):
+    for component in path[:-1]:
+        if component not in dikt:
+            dikt[component] = {}
+            dikt = dikt[component]
+    dikt[path[-1]] = val
 
 
 def schema(title, version, base_path=None):
@@ -72,7 +81,7 @@ def get_tag(rule):
 
 
 def get_docs(function):
-    """Return (summary, description) tuple from the passed in function"""
+    """Return (summary, description, swagger-yaml) tuple from the passed in function"""
     try:
         summary, description = re.match(
             r"""
@@ -92,7 +101,10 @@ def get_docs(function):
     # "Implementation Notes" paragraph. AFAICS this is not in the
     # swagger spec?
     description = re.sub(r'\n\n+', '\n', description)
-    return summary, description
+    # Anything after --- is yaml for this function
+    lst = re.split(r'\n[ \t]*---[ \t]*\n+', description)
+
+    return [summary] + lst
 
 
 def get_flask_classy_class(method):
@@ -121,6 +133,14 @@ def get_parameter_types(rule):
 
     return param_types
 
+def get_schema_class(rule, method):
+    klass = get_flask_classy_class(method)
+    if klass == None:
+        return None
+    schema_class = getattr(klass, 'schema_class', None)
+    if schema_class == None:
+        return None
+    return schema_class
 
 def get_parameters(rule, method):
     """Return parameters for the passed-in method
@@ -216,10 +236,21 @@ def generate_everything(app, title, version, base_path=None):
         path = get_path(rule)
 
         method = get_api_method(app, rule)
-
         status_code = get_status_code(method)
         summary, description = get_docs(method)
+
+        # SPLBIO code: extract from method comments
+        docs = get_docs(method)
+
+        summary = docs[0]
+        description = docs[1]
+        if len(docs) > 2:
+            yaml = docs[3]
+        else:
+            yaml = None
+
         parameters = get_parameters(rule, method)
+        schema_class = get_schema_class(rule, method)
 
         tag = get_tag(rule)
         if tag not in tags:
@@ -237,7 +268,33 @@ def generate_everything(app, title, version, base_path=None):
                 }
             }
         }
+
         path_item_name = http_verb(rule)
+        if schema_class:
+            # getting a single item
+            schema_dict = None
+            if method.__name__ == 'index':
+                schema_dict = {
+                        "items": {
+                            "$ref": "#/definitions/" + schema_class.__name__
+                            },
+                        "type": "array"
+                    }
+            elif method.__name__ == 'get':
+                schema_dict = {
+                        "$ref": "#/definitions/" + schema_class.__name__
+                    }
+            if schema_dict:
+                set_dict_default(path_item_object, ["responses", "200", "schema"], schema_dict)
+
+
+        # so if we had some responses and there is no default error, just add a default one
+        # for completeness
+        if "responses" in path_item_object and "default" not in path_item_object["responses"]:
+            path_item_object["responses"]["default"] = {
+                    "description" : "Unexpected error",
+                    "schema" : "#/definitions/Error",
+                    }
         paths[path][path_item_name] = path_item_object
 
     docs = schema(title, version, base_path)
@@ -249,6 +306,7 @@ def generate_everything(app, title, version, base_path=None):
 
 def swaggerify(
         app, title, version, swagger_path=SWAGGER_PATH, base_path=None):
+    logging.debug("in swaggerify")
     @app.route(swagger_path)
     def swagger():
         docs = generate_everything(app, title, version, base_path)
