@@ -1,12 +1,11 @@
 import ast
 import inspect
 import re
+import textwrap
 from collections import defaultdict
-
-
 from flask import jsonify
-
 from undecorated import undecorated
+import logging
 
 
 SWAGGER_VERSION = '2.0'
@@ -22,6 +21,13 @@ WERKZEUG_SWAGGER_TYPES = {
 }
 # anything else is the default type below:
 DEFAULT_TYPE = ('string', None)
+
+def set_dict_default(dikt, path, val):
+    for component in path[:-1]:
+        if component not in dikt:
+            dikt[component] = {}
+            dikt = dikt[component]
+    dikt[path[-1]] = val
 
 
 def schema(title, version, base_path=None):
@@ -72,7 +78,7 @@ def get_tag(rule):
 
 
 def get_docs(function):
-    """Return (summary, description) tuple from the passed in function"""
+    """Return (summary, description, swagger-yaml) tuple from the passed-in function."""
     try:
         summary, description = re.match(
             r"""
@@ -81,10 +87,11 @@ def get_docs(function):
             \s*    # maybe indentation to the beginning of the next line
             (.*)   # maybe multiple other lines DOTALL
             """,
-            function.func_doc.strip(),
+            function.__doc__.strip(),
             re.MULTILINE | re.DOTALL | re.VERBOSE
         ).groups()
-    except (AttributeError, TypeError):
+    except (AttributeError, TypeError) as err:
+        print("Failed to parse swagger docs: ", err)
         return '', ''
 
     # swagger ignores single newlines, but if it sees two consecutive
@@ -92,7 +99,18 @@ def get_docs(function):
     # "Implementation Notes" paragraph. AFAICS this is not in the
     # swagger spec?
     description = re.sub(r'\n\n+', '\n', description)
-    return summary, description
+    # Anything after --- is yaml for this function
+    desc_yaml = re.split(r'\n?[ \t]*---[ \t]*\n+', description)
+
+    yaml = None
+    if len(desc_yaml) > 1:
+        description = desc_yaml[0]
+        yaml = desc_yaml[1]
+
+    if not description:
+        description = None
+
+    return (summary, description, yaml)
 
 
 def get_flask_classy_class(method):
@@ -121,6 +139,14 @@ def get_parameter_types(rule):
 
     return param_types
 
+def get_schema_class(rule, method):
+    klass = get_flask_classy_class(method)
+    if klass == None:
+        return None
+    schema_class = getattr(klass, 'schema_class', None)
+    if schema_class == None:
+        return None
+    return schema_class
 
 def get_parameters(rule, method):
     """Return parameters for the passed-in method
@@ -132,7 +158,7 @@ def get_parameters(rule, method):
     if method is None:
         return []
 
-    argspec = inspect.getargspec(method)
+    argspec = inspect.getfullargspec(method)
     if argspec.defaults is None:
         # all are required
         optional = []
@@ -143,9 +169,9 @@ def get_parameters(rule, method):
     else:
         optional = [
             {'name': p, 'required': False}
-            # go from back to front because of the way getargspec returns
+            # go from back to front because of the way getfullargspec returns
             # args and defaults
-            for p, d in zip(argspec.args[::-1], argspec.defaults[::-1])[::-1]
+            for p, d in list(zip(argspec.args[::-1], argspec.defaults[::-1]))[::-1]
         ]
         required = [
             {'name': p, 'required': True}
@@ -190,18 +216,22 @@ def get_status_code(method):
             # we don't even know if this is flask's jsonify or if it
             # comes from a different module) means the status code is
             # 200
-            if (
-                    node.value and
-                    # TODO fix the ugly
-                    isinstance(node.value, ast.Call) and
-                    node.value.func.id == 'jsonify'
-            ):
-                self.status_code = '200'
+            if node.value and isinstance(node.value, ast.Attribute) and hasattr(node.value, 'func') and node.value.func.value.id == 'jsonify':
+                # ???
+                self.status_code = 200
+            elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute):
+                # this is a method call. ignore?
+                pass
+            elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id == 'jsonify':
+                # return jsonify(...)
+                self.status_code = 200
 
     visitor = MyVisitor()
-    visitor.visit(
-        ast.parse(
-            inspect.getsource(method).strip()))
+    method_source = inspect.getsource(method)
+    # remove common extra indenting
+    method_source = textwrap.dedent(method_source)
+    method_ast = ast.parse(method_source)
+    visitor.visit(method_ast)
     return visitor.status_code
 
 
@@ -216,10 +246,13 @@ def generate_everything(app, title, version, base_path=None):
         path = get_path(rule)
 
         method = get_api_method(app, rule)
-
         status_code = get_status_code(method)
-        summary, description = get_docs(method)
+
+        # extract (summary, desc, yaml) from method pydoc
+        summary, description, _ = get_docs(method)
+
         parameters = get_parameters(rule, method)
+        schema_class = get_schema_class(rule, method)
 
         tag = get_tag(rule)
         if tag not in tags:
@@ -237,7 +270,33 @@ def generate_everything(app, title, version, base_path=None):
                 }
             }
         }
+
         path_item_name = http_verb(rule)
+        if schema_class:
+            # getting a single item
+            schema_dict = None
+            if method.__name__ == 'index':
+                schema_dict = {
+                        "items": {
+                            "$ref": "#/definitions/" + schema_class.__name__
+                            },
+                        "type": "array"
+                    }
+            elif method.__name__ == 'get':
+                schema_dict = {
+                        "$ref": "#/definitions/" + schema_class.__name__
+                    }
+            if schema_dict:
+                set_dict_default(path_item_object, ["responses", "200", "schema"], schema_dict)
+
+
+        # so if we had some responses and there is no default error, just add a default one
+        # for completeness
+        if "responses" in path_item_object and "default" not in path_item_object["responses"] and "200" not in path_item_object["responses"]:
+            path_item_object["responses"]["default"] = {
+                    "description" : "Unexpected error",
+                    "schema" : "#/definitions/Error",
+                    }
         paths[path][path_item_name] = path_item_object
 
     docs = schema(title, version, base_path)
@@ -247,8 +306,7 @@ def generate_everything(app, title, version, base_path=None):
     return docs
 
 
-def swaggerify(
-        app, title, version, swagger_path=SWAGGER_PATH, base_path=None):
+def swaggerify(app, title, version, swagger_path=SWAGGER_PATH, base_path=None):
     @app.route(swagger_path)
     def swagger():
         docs = generate_everything(app, title, version, base_path)
