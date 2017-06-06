@@ -24,6 +24,13 @@ WERKZEUG_SWAGGER_TYPES = {
 DEFAULT_TYPE = ('string', None)
 
 
+def func_doc(func):
+    try:
+        return func.func_doc
+    except AttributeError:  # python3
+        return func.__doc__
+
+
 def schema(title, version, base_path=None):
     schema = {"swagger": SWAGGER_VERSION,
               "paths": {},
@@ -81,7 +88,7 @@ def get_docs(function):
             \s*    # maybe indentation to the beginning of the next line
             (.*)   # maybe multiple other lines DOTALL
             """,
-            function.func_doc.strip(),
+            func_doc(function).strip(),
             re.MULTILINE | re.DOTALL | re.VERBOSE
         ).groups()
     except (AttributeError, TypeError):
