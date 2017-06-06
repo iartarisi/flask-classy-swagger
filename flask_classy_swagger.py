@@ -188,6 +188,18 @@ def get_api_method(app, rule):
     return undecorated(app.view_functions[rule.endpoint])
 
 
+def unindented_method_code(method):
+    indented = inspect.getsource(method)
+    indentation = re.match('(\s+)', indented)
+    if indentation:
+        unindented = re.sub('(?m)^{}'.format(
+            indentation.groups()[0]), '', indented)
+    else:
+        unindented = indented
+
+    return unindented
+
+
 def get_status_code(method):
     class MyVisitor(ast.NodeVisitor):
         status_code = 'unknown'
@@ -206,9 +218,9 @@ def get_status_code(method):
                 self.status_code = '200'
 
     visitor = MyVisitor()
-    visitor.visit(
-        ast.parse(
-            inspect.getsource(method).strip()))
+
+    code = unindented_method_code(method)
+    visitor.visit(ast.parse(code))
     return visitor.status_code
 
 
