@@ -106,11 +106,29 @@ def get_flask_classy_class(method):
     if method is None:
         return None
 
-    try:
-        return method.im_class
-    # probably an (unsupported) un-flask-classy endpoint
-    except AttributeError:
+    if not inspect.ismethod(method):
+        print(
+            "Couldn't determine to which class '{}' is bound. "
+            "Doesn't look like a method."
+            .format(method.__name__))
         return None
+
+    try:
+        # python2
+        return method.im_class
+    except AttributeError:
+        # python3 does not have unbound methods, it just has bound
+        # methods and functions, so the im_class attribute also
+        # disappeared
+        for klass in inspect.getmro(method.__self__.__class__):
+            if klass.__dict__.get(method.__name__) is method.__func__:
+                return klass
+        else:
+            print(
+                "Couldn't determine to which class the method '{}' "
+                "is bound."
+                .format(method.__name__))
+            return None
 
 
 def get_tag_description(func):
