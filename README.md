@@ -1,12 +1,10 @@
 # Flask Classy Swagger
 
-[![Build Status](https://travis-ci.org/mapleoin/flask-classy-swagger.svg?branch=master)](https://travis-ci.org/mapleoin/flask-classy-swagger)
+py 2.7-3.6: [![Build Status](https://travis-ci.org/mapleoin/flask-classy-swagger.svg?branch=master)](https://travis-ci.org/mapleoin/flask-classy-swagger)
 
 Generate [Swagger](http://swagger.io/) API representations from [Flask Classy](https://pythonhosted.org/Flask-Classy/) views.
 
 Flask-Classy-Swagger aims to allow you to generate a swagger representation of your API without writing anything specific to it. It uses the code and documentation you already have (by introspecting methods) and does not add its own markup language to define swagger-specific metadata. It's even compatible (but slightly less useful) with normal non-Flask-Classy Flask endpoints.
-
-NOTE: This only works with python2 so far (mainly due to flask-classy itself only working with python2).
 
 **This is an alpha-version work in progress! Most swagger features are not yet supported and the format and requirements might change.**
 
