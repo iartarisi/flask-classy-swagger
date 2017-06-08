@@ -31,7 +31,7 @@ class TestSwaggerify(object):
         client = app.test_client()
 
         response = client.get('/swagger.json')
-        assert json.loads(response.data) == BASIC_SCHEMA
+        assert json.loads(response.data.decode('utf8')) == BASIC_SCHEMA
 
 
 class TestGetDocs(object):
