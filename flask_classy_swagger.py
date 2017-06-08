@@ -168,9 +168,7 @@ def get_parameters(rule, method):
     else:
         optional = [
             {'name': p, 'required': False}
-            # go from back to front because of the way getargspec returns
-            # args and defaults
-            for p, d in zip(argspec.args[::-1], argspec.defaults[::-1])[::-1]
+            for p in argspec.args[-len(argspec.defaults):]
         ]
         required = [
             {'name': p, 'required': True}
